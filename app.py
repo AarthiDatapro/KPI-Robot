@@ -1,20 +1,16 @@
 from flask import Flask, render_template, request, send_file
 import openpyxl
 import random
-import os
-from werkzeug.utils import secure_filename
+from io import BytesIO
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Fixed probabilities
+# ---------------- FIXED PROBABILITIES ----------------
 V_PROBABILITY = 0.98
 MARKS_PROBABILITY = 0.85
 ANSWER_PROBABILITY = 0.95
 
-# Fixed projects
+# ---------------- FIXED PROJECTS ----------------
 projects = {
     1: "Exploratory Analysis of Iris Flower Measurements",
     2: "Chemical Composition Analysis of Italian Wines",
@@ -33,7 +29,7 @@ def col_letter_to_index(letter):
     return ord(letter.upper()) - 64
 
 def parse_columns(text):
-    return [col_letter_to_index(c.strip()) for c in text.split(",")]
+    return [col_letter_to_index(c.strip()) for c in text.split(",") if c.strip()]
 
 def parse_rows(text):
     rows = set()
@@ -50,16 +46,15 @@ def parse_rows(text):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        file = request.files["file"]
-        option = request.form["option"]
 
+        # Read uploaded Excel directly (NO saving)
+        file = request.files["file"]
+        wb = openpyxl.load_workbook(file)
+
+        option = request.form["option"]
         columns = parse_columns(request.form["columns"])
         rows = parse_rows(request.form["row_ranges"])
 
-        filepath = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
-        file.save(filepath)
-
-        wb = openpyxl.load_workbook(filepath)
         sheets = wb.sheetnames[1:]  # skip first sheet
 
         # -------- OPTION 1: MARK "v" --------
@@ -79,7 +74,7 @@ def index():
             team_number = 1
 
             while sheet_index < len(sheets) and team_number <= 10:
-                for _ in range(5):
+                for _ in range(5):  # 5 members per team
                     if sheet_index >= len(sheets):
                         break
 
@@ -101,7 +96,11 @@ def index():
 
         # -------- OPTION 3: ANSWERS --------
         elif option == "3":
-            ref_col = col_letter_to_index(request.form["ref_column"])
+            ref_column = request.form.get("ref_column", "").strip()
+            if not ref_column:
+                return "Reference column is required for Option 3", 400
+
+            ref_col = col_letter_to_index(ref_column)
 
             for sheet in sheets:
                 ws = wb[sheet]
@@ -117,12 +116,19 @@ def index():
                             wrong = [x for x in [1, 2, 3, 4] if x != correct]
                             ws.cell(row=row, column=col).value = random.choice(wrong)
 
-        output_path = filepath.replace(".xlsx", "_updated.xlsx")
-        wb.save(output_path)
+        # -------- SEND FILE (IN MEMORY) --------
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
 
-        return send_file(output_path, as_attachment=True)
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name="updated.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

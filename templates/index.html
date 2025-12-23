@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel KPI Automation | Professional Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            height: 100%;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(102, 126, 234, 0.1) inset;
+            padding: 40px 60px;
+            width: 100%;
+            max-width: 100%;
+            min-height: 100vh;
+            position: relative;
+            animation: slideUp 0.6s ease-out;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 992px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        .label-required::after {
+            content: ' *';
+            color: #ef4444;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        .file-upload-label:hover {
+            border-color: #818cf8;
+            background: linear-gradient(to bottom, #334155, #1e293b);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.3);
+        }
+
+        .file-upload-label:active {
+            transform: translateY(0);
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #a78bfa;
+            font-weight: 600;
+            display: none;
+        }
+
+        .file-name.show {
+            display: block;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #475569;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #818cf8;
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+            transform: translateY(-1px);
+        }
+
+        input[type="text"]::placeholder,
+        input[type="number"]::placeholder {
+            color: #64748b;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            padding-right: 45px;
+        }
+
+        .option-description {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .conditional-field {
+            opacity: 0.5;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .conditional-field.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c084fc 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+            position: relative;
+            overflow: hidden;
+            margin-top: 32px;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .submit-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(129, 140, 248, 0.6);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #475569, transparent);
+            margin: 32px 0;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                padding: 40px 50px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                padding: 35px 40px;
+            }
+
+            form {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 24px;
+                border-radius: 0;
+            }
+
+            .header {
+                margin-bottom: 30px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .icon {
+                font-size: 2.5rem;
+            }
+
+            .input-section {
+                padding: 20px;
+            }
+
+            .input-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1rem;
+            }
+
+            .input-title {
+                font-size: 1rem;
+            }
+
+            .styled-input {
+                padding: 14px 16px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .header p {
+                font-size: 0.95rem;
+            }
+
+            .icon {
+                font-size: 2rem;
+                margin-bottom: 12px;
+            }
+
+            .input-section {
+                padding: 16px;
+            }
+
+            .input-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .input-icon {
+                width: 32px;
+                height: 32px;
+            }
+
+            .input-title {
+                font-size: 0.95rem;
+            }
+
+            .input-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .styled-input {
+                padding: 12px 14px;
+                font-size: 0.95rem;
+            }
+
+            .format-preview {
+                padding: 12px;
+            }
+
+            .format-preview-content {
+                font-size: 0.85rem;
+            }
+
+            .submit-btn {
+                padding: 16px 24px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            form {
+                max-width: 1600px;
+            }
+
+            .container {
+                padding: 50px 80px;
+            }
+        }
+
+        @media (min-width: 1600px) {
+            .container {
+                padding: 60px 100px;
+            }
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .help-icon {
+            font-size: 1rem;
+        }
+
+        .input-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #475569;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .input-section:hover {
+            border-color: #818cf8;
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.2);
+        }
+
+        .input-section.focused {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+        }
+
+        .input-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .input-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .input-title-wrapper {
+            flex: 1;
+        }
+
+        .input-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+        }
+
+        .input-subtitle {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .styled-input-wrapper {
+            position: relative;
+        }
+
+        .styled-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #475569;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .styled-input:focus {
+            outline: none;
+            border-color: #818cf8;
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .styled-input::placeholder {
+            font-family: inherit;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+
+        .format-preview {
+            margin-top: 16px;
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 10px;
+            border-left: 4px solid #818cf8;
+        }
+
+        .format-preview-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .format-preview-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            font-weight: 600;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .format-item {
+            background: #1e293b;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            display: inline-block;
+        }
+
+        .format-separator {
+            color: #64748b;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Excel KPI Automation</h1>
+            <p>Professional Excel Processing Tool</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="mainForm">
+            <div class="form-group">
+                <label class="label-required">Upload Excel Workbook</label>
+                <div class="file-upload-wrapper">
+                    <label for="fileInput" class="file-upload-label">
+                        <span class="file-icon">📁</span>
+                        <span id="fileLabelText">Choose Excel file (.xlsx)</span>
+                    </label>
+                    <input type="file" id="fileInput" name="file" accept=".xlsx" required>
+                    <div class="file-name" id="fileName"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="label-required">Select Processing Option</label>
+                <select name="option" id="optionSelect" required>
+                    <option value="">-- Choose an option --</option>
+        <option value="1">Option 1 – Mark "v"</option>
+        <option value="2">Option 2 – Marks (Team-wise)</option>
+        <option value="3">Option 3 – Answers (Reference-based)</option>
+    </select>
+                <div class="option-description" id="optionDescription"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="form-grid">
+            <div class="input-section" id="columnsSection">
+                <div class="input-header">
+                    <div class="input-icon">📋</div>
+                    <div class="input-title-wrapper">
+                        <div class="input-title">
+                            Target Columns <span style="color: #ef4444;">*</span>
+                        </div>
+                        <div class="input-subtitle">Specify which columns to process</div>
+                    </div>
+                </div>
+                <div class="styled-input-wrapper">
+                    <input 
+                        type="text" 
+                        name="columns" 
+                        class="styled-input" 
+                        id="columnsInput"
+                        placeholder="H,I,J" 
+                        required>
+                </div>
+                <div class="format-preview" id="columnsPreview">
+                    <div class="format-preview-title">
+                        <span>📌</span>
+                        <span>Format Preview:</span>
+                    </div>
+                    <div class="format-preview-content" id="columnsPreviewContent">
+                        <span style="color: #94a3b8;">Enter column letters to see preview...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-section" id="rowsSection">
+                <div class="input-header">
+                    <div class="input-icon">🔢</div>
+                    <div class="input-title-wrapper">
+                        <div class="input-title">
+                            Row Ranges <span style="color: #ef4444;">*</span>
+                        </div>
+                        <div class="input-subtitle">Specify which rows to process (supports ranges)</div>
+                    </div>
+                </div>
+                <div class="styled-input-wrapper">
+                    <input 
+                        type="text" 
+                        name="row_ranges" 
+                        class="styled-input" 
+                        id="rowsInput"
+                        placeholder="132,135-140,142,145" 
+                        required>
+                </div>
+                <div class="format-preview" id="rowsPreview">
+                    <div class="format-preview-title">
+                        <span>📌</span>
+                        <span>Format Preview:</span>
+                    </div>
+                    <div class="format-preview-content" id="rowsPreviewContent">
+                        <span style="color: #94a3b8;">Enter row numbers to see preview...</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="form-group conditional-field" id="marksField">
+                <label>Marks (Required for Option 2)</label>
+                <input type="number" name="marks" min="0" max="100">
+                <div class="help-text">
+                    <span class="help-icon">💡</span>
+                    <span>Enter the marks value to assign</span>
+                </div>
+            </div>
+
+            <div class="form-group conditional-field" id="refColumnField">
+                <label>Reference Column (Required for Option 3)</label>
+                <input type="text" name="ref_column" placeholder="I" maxlength="1">
+                <div class="help-text">
+                    <span class="help-icon">💡</span>
+                    <span>Enter the column letter containing correct answers</span>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <span>🚀 Process & Download Excel</span>
+            </button>
+</form>
+    </div>
+
+    <script>
+        // File input handling
+        const fileInput = document.getElementById('fileInput');
+        const fileLabelText = document.getElementById('fileLabelText');
+        const fileName = document.getElementById('fileName');
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                fileLabelText.textContent = 'File selected: ' + file.name;
+                fileName.textContent = '✓ ' + file.name;
+                fileName.classList.add('show');
+            }
+        });
+
+        // Option selection handling
+        const optionSelect = document.getElementById('optionSelect');
+        const optionDescription = document.getElementById('optionDescription');
+        const marksField = document.getElementById('marksField');
+        const refColumnField = document.getElementById('refColumnField');
+
+        const optionDescriptions = {
+            '1': 'Mark specified cells with "v" in all sheets',
+            '2': 'Assign marks and team numbers with project names',
+            '3': 'Fill answers based on a reference column'
+        };
+
+        optionSelect.addEventListener('change', function() {
+            const value = this.value;
+            
+            // Update description
+            if (value && optionDescriptions[value]) {
+                optionDescription.textContent = optionDescriptions[value];
+                optionDescription.style.display = 'block';
+            } else {
+                optionDescription.textContent = '';
+                optionDescription.style.display = 'none';
+            }
+
+            // Show/hide conditional fields
+            if (value === '2') {
+                marksField.classList.add('active');
+                refColumnField.classList.remove('active');
+                marksField.querySelector('input').required = true;
+                refColumnField.querySelector('input').required = false;
+            } else if (value === '3') {
+                marksField.classList.remove('active');
+                refColumnField.classList.add('active');
+                marksField.querySelector('input').required = false;
+                refColumnField.querySelector('input').required = true;
+            } else {
+                marksField.classList.remove('active');
+                refColumnField.classList.remove('active');
+                marksField.querySelector('input').required = false;
+                refColumnField.querySelector('input').required = false;
+            }
+        });
+
+        // Form validation
+        document.getElementById('mainForm').addEventListener('submit', function(e) {
+            const option = optionSelect.value;
+            
+            if (option === '2') {
+                const marksInput = marksField.querySelector('input[name="marks"]');
+                if (!marksInput.value) {
+                    e.preventDefault();
+                    marksInput.focus();
+                    marksInput.style.borderColor = '#ef4444';
+                    return false;
+                }
+            } else if (option === '3') {
+                const refInput = refColumnField.querySelector('input[name="ref_column"]');
+                if (!refInput.value) {
+                    e.preventDefault();
+                    refInput.focus();
+                    refInput.style.borderColor = '#ef4444';
+                    return false;
+                }
+            }
+        });
+
+        // Clear error styling on input
+        document.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('input', function() {
+                this.style.borderColor = '#475569';
+            });
+        });
+
+        // Columns input preview
+        const columnsInput = document.getElementById('columnsInput');
+        const columnsPreviewContent = document.getElementById('columnsPreviewContent');
+        const columnsSection = document.getElementById('columnsSection');
+
+        columnsInput.addEventListener('focus', function() {
+            columnsSection.classList.add('focused');
+        });
+
+        columnsInput.addEventListener('blur', function() {
+            columnsSection.classList.remove('focused');
+        });
+
+        columnsInput.addEventListener('input', function() {
+            const value = this.value.trim().toUpperCase();
+            if (value) {
+                const items = value.split(',').map(item => item.trim()).filter(item => item);
+                columnsPreviewContent.innerHTML = items.map((item, index) => {
+                    return `<span class="format-item">${item}</span>${index < items.length - 1 ? '<span class="format-separator">,</span>' : ''}`;
+                }).join(' ');
+            } else {
+                columnsPreviewContent.innerHTML = '<span style="color: #94a3b8;">Enter column letters to see preview...</span>';
+            }
+        });
+
+        // Rows input preview
+        const rowsInput = document.getElementById('rowsInput');
+        const rowsPreviewContent = document.getElementById('rowsPreviewContent');
+        const rowsSection = document.getElementById('rowsSection');
+
+        rowsInput.addEventListener('focus', function() {
+            rowsSection.classList.add('focused');
+        });
+
+        rowsInput.addEventListener('blur', function() {
+            rowsSection.classList.remove('focused');
+        });
+
+        rowsInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value) {
+                const items = value.split(',').map(item => item.trim()).filter(item => item);
+                rowsPreviewContent.innerHTML = items.map((item, index) => {
+                    const isRange = item.includes('-');
+                    const color = isRange ? '#a78bfa' : '#e2e8f0';
+                    return `<span class="format-item" style="color: ${color}; border-color: ${isRange ? '#818cf8' : '#475569'}; background: ${isRange ? '#1e3a5f' : '#1e293b'}">${item}</span>${index < items.length - 1 ? '<span class="format-separator">,</span>' : ''}`;
+                }).join(' ');
+            } else {
+                rowsPreviewContent.innerHTML = '<span style="color: #94a3b8;">Enter row numbers to see preview...</span>';
+            }
+        });
+    </script>
+</body>
+</html>

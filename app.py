@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, send_file
 import openpyxl
 import random
 from io import BytesIO
+import os
 
 app = Flask(__name__)
 
 # ---------------- FIXED PROBABILITIES ----------------
-V_PROBABILITY = 0.98
+V_PROBABILITY = 0.90
 MARKS_PROBABILITY = 0.85
-ANSWER_PROBABILITY = 0.95
+ANSWER_PROBABILITY = 0.90
 
 # ---------------- FIXED PROJECTS ----------------
 projects = {
@@ -131,4 +132,4 @@ def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))

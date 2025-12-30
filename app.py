@@ -79,16 +79,23 @@ def parse_rows(text):
             rows.add(int(part))
     return sorted(rows)
 
-def process_option_1(wb, sheets, columns, rows):
+def process_option_1(source_wb, dest_wb, sheets, columns, rows):
     """Process option 1: Mark 'v' in specified cells"""
-    for sheet in sheets:
-        ws = wb[sheet]
+    for sheet_name in sheets:
+        ws_src = source_wb[sheet_name]
+        ws_dest = dest_wb.create_sheet(title=sheet_name)
+        
+        # Copy all rows
+        for row in ws_src.iter_rows(values_only=True):
+            ws_dest.append(row)
+            
+        # Mark cells
         for col in columns:
-            for row in rows:
+            for row_idx in rows:
                 if random.random() < V_PROBABILITY:
-                    ws.cell(row=row, column=col).value = "v"
+                    ws_dest.cell(row=row_idx, column=col).value = "v"
 
-def process_option_2(wb, sheets, columns, rows, marks):
+def process_option_2(source_wb, dest_wb, sheets, columns, rows, marks):
     """Process option 2: Add marks, team, and project info"""
     sheet_index = 0
     team_number = 1
@@ -98,37 +105,53 @@ def process_option_2(wb, sheets, columns, rows, marks):
             if sheet_index >= len(sheets):
                 break
 
-            ws = wb[sheets[sheet_index]]
-            ws["D4"] = team_number
-            ws["D5"] = projects[team_number]
+            sheet_name = sheets[sheet_index]
+            ws_src = source_wb[sheet_name]
+            ws_dest = dest_wb.create_sheet(title=sheet_name)
+            
+            # Copy all rows
+            for row in ws_src.iter_rows(values_only=True):
+                ws_dest.append(row)
+                
+            # Update team and project info
+            ws_dest["D4"] = team_number
+            ws_dest["D5"] = projects[team_number]
 
+            # Update marks
             for col in columns:
-                for row in rows:
+                for row_idx in rows:
                     if random.random() < MARKS_PROBABILITY:
-                        ws.cell(row=row, column=col).value = marks
+                        ws_dest.cell(row=row_idx, column=col).value = marks
                     else:
-                        ws.cell(row=row, column=col).value = random.randint(
+                        ws_dest.cell(row=row_idx, column=col).value = random.randint(
                             marks - 3, marks - 1
                         )
 
             sheet_index += 1
         team_number += 1
 
-def process_option_3(wb, sheets, columns, rows, ref_col):
+def process_option_3(source_wb, dest_wb, sheets, columns, rows, ref_col):
     """Process option 3: Generate answers based on reference column"""
-    for sheet in sheets:
-        ws = wb[sheet]
+    for sheet_name in sheets:
+        ws_src = source_wb[sheet_name]
+        ws_dest = dest_wb.create_sheet(title=sheet_name)
+        
+        # Copy all rows
+        for row in ws_src.iter_rows(values_only=True):
+            ws_dest.append(row)
+            
+        # Process answers
         for col in columns:
-            for row in rows:
-                correct = ws.cell(row=row, column=ref_col).value
+            for row_idx in rows:
+                correct = ws_dest.cell(row=row_idx, column=ref_col).value
                 if correct not in [1, 2, 3, 4]:
                     continue
 
                 if random.random() < ANSWER_PROBABILITY:
-                    ws.cell(row=row, column=col).value = correct
+                    ws_dest.cell(row=row_idx, column=col).value = correct
                 else:
                     wrong = [x for x in [1, 2, 3, 4] if x != correct]
-                    ws.cell(row=row, column=col).value = random.choice(wrong)
+                    ws_dest.cell(row=row_idx, column=col).value = random.choice(wrong)
 
 # ---------------- ROUTE ----------------
 @app.route("/", methods=["GET", "POST"])
@@ -150,15 +173,13 @@ def index():
 
             logger.info(f"Processing file: {file.filename}")
             
-            # Process in chunks if file is large
-            if len(file.read()) > 10 * 1024 * 1024:  # 10MB
-                logger.warning("Large file detected, using read-only mode")
+            # Always use read-only mode for better memory efficiency
+            try:
                 wb = openpyxl.load_workbook(file, read_only=True)
-                read_only = True
-            else:
-                file.seek(0)
-                wb = openpyxl.load_workbook(file, read_only=False)
-                read_only = False
+                logger.info("Using read-only mode for better memory efficiency")
+            except Exception as e:
+                logger.error(f"Error loading workbook: {str(e)}")
+                return jsonify({"error": "Error processing the Excel file. It might be corrupted or too large."}), 400
 
             option = request.form.get("option")
             columns = parse_columns(request.form.get("columns", ""))
@@ -171,37 +192,54 @@ def index():
             sheets = wb.sheetnames[1:]  # skip first sheet
             logger.info(f"Processing {len(sheets)} sheets")
 
+            # Create a new workbook for output
+            output_wb = openpyxl.Workbook()
+            
+            # Remove default sheet created by openpyxl
+            output_wb.remove(output_wb.active)
+            
             # Process based on option
-            if option == "1":
-                process_option_1(wb, sheets, columns, rows)
-            elif option == "2":
-                marks = int(request.form.get("marks", 0))
-                process_option_2(wb, sheets, columns, rows, marks)
-            elif option == "3":
-                ref_column = request.form.get("ref_column", "").strip()
-                if not ref_column:
-                    return jsonify({"error": "Reference column is required for Option 3"}), 400
-                ref_col = col_letter_to_index(ref_column)
-                process_option_3(wb, sheets, columns, rows, ref_col)
+            try:
+                if option == "1":
+                    process_option_1(wb, output_wb, sheets, columns, rows)
+                elif option == "2":
+                    marks = int(request.form.get("marks", 0))
+                    process_option_2(wb, output_wb, sheets, columns, rows, marks)
+                elif option == "3":
+                    ref_column = request.form.get("ref_column", "").strip()
+                    if not ref_column:
+                        return jsonify({"error": "Reference column is required for Option 3"}), 400
+                    ref_col = col_letter_to_index(ref_column)
+                    process_option_3(wb, output_wb, sheets, columns, rows, ref_col)
+                else:
+                    return jsonify({"error": "Invalid option"}), 400
 
-            # Save to memory-efficient buffer
-            output = BytesIO()
-            logger.info("Saving workbook...")
-            wb.save(output)
-            output.seek(0)
-            
-            # Clean up
-            cleanup_resources(wb, file)
-            log_memory_usage("After processing: ")
+                # Save to memory-efficient buffer
+                output = BytesIO()
+                logger.info("Saving workbook...")
+                output_wb.save(output)
+                output.seek(0)
+                
+                # Clean up
+                cleanup_resources(wb, output_wb, file)
+                log_memory_usage("After processing: ")
 
-            logger.info(f"Request processed in {(datetime.now() - start_time).total_seconds():.2f} seconds")
-            
-            return send_file(
-                output,
-                as_attachment=True,
-                download_name="updated.xlsx",
-                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                logger.info(f"Request processed in {(datetime.now() - start_time).total_seconds():.2f} seconds")
+                
+                return send_file(
+                    output,
+                    as_attachment=True,
+                    download_name="updated.xlsx",
+                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            except Exception as e:
+                logger.error(f"Error during processing: {str(e)}", exc_info=True)
+                if 'output_wb' in locals():
+                    cleanup_resources(wb, output_wb, file)
+                else:
+                    cleanup_resources(wb, file)
+                return jsonify({"error": "An error occurred while processing your request"}), 500
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
